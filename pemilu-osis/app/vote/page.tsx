@@ -351,7 +351,7 @@ export default function VotePage() {
               </div>
             ) : (
               <span className="font-mono text-xs text-neutral-500">
-                Belum ada nomor yang dipilih
+                Belum ada paslon yang dipilih
               </span>
             )}
           </div>
