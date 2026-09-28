@@ -262,11 +262,15 @@ export const api = {
   },
 
   async adminResetVotes(username: string, key: string): Promise<void> {
-    const { error } = await sb().rpc("admin_reset_votes", {
-      p_username: username,
-      p_key: key,
+    const res = await fetch("/api/admin/reset-votes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, key }),
     });
-    if (error) throw friendly(error);
+    const body = (await res.json().catch(() => ({}))) as {
+      error?: string;
+    };
+    if (!res.ok) throw new Error(body.error ?? "Gagal menghapus suara.");
   },
 
   async adminSetAdminPassword(

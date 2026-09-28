@@ -174,16 +174,22 @@ export default function AdminPage() {
         </button>
       </div>
 
-      {error && (
-        <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3.5 text-sm font-medium text-rose-800">
-          {error}
+      {(error || notice) && (
+        <div className="pointer-events-none fixed inset-x-0 top-3 z-50 flex justify-center px-4">
+          <div
+            role="status"
+            aria-live="polite"
+            className={`pointer-events-auto max-w-md rounded-2xl border px-5 py-3.5 text-sm font-medium shadow-lg ${
+              error
+                ? "border-rose-300 bg-rose-50 text-rose-800"
+                : "border-emerald-300 bg-emerald-50 text-emerald-800"
+            }`}
+          >
+            {error || notice}
+          </div>
         </div>
       )}
-      {notice && (
-        <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-sm font-medium text-emerald-800">
-          {notice}
-        </div>
-      )}
+
 
       <div className="mt-6 flex flex-wrap gap-2">
           {TABS.map((t) => {
@@ -549,88 +555,116 @@ function CandidatesTab({
         </button>
       </div>
 
-      <div className="surface mt-4 overflow-x-auto">
-        <table className="w-full min-w-[560px] text-sm">
-          <thead>
-            <tr className="border-b border-neutral-100 text-left text-xs font-semibold tracking-normal text-neutral-500">
-              <th className="px-4 py-3">No.</th>
-              <th className="px-4 py-3">Nama</th>
-              <th className="px-4 py-3">Kelas</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((c) => (
-              <tr key={c.id} className="border-b border-neutral-50 last:border-0">
-                <td className="px-4 py-3 font-bold text-brand-deep">
-                  {c.number}
-                </td>
-                <td className="px-4 py-3 font-semibold text-neutral-800">
-                  {c.name}
-                  {c.slogan && (
-                    <div className="text-xs font-normal italic text-neutral-500">
-                      &ldquo;{c.slogan}&rdquo;
-                    </div>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-neutral-500">{c.class_name}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                      c.is_active
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-neutral-100 text-neutral-500"
-                    }`}
-                  >
-                    {c.is_active ? "Aktif" : "Nonaktif"}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => {
-                      setFormError("");
-                      setEditing({
-                        id: c.id,
-                        number: c.number,
-                        name: c.name,
-                        class_name: c.class_name,
-                        wakil_name: c.wakil_name ?? "",
-                        wakil_class_name: c.wakil_class_name ?? "",
-                        photo_url: c.photo_url ?? "",
-                        vote_photo_url: c.vote_photo_url ?? "",
-                        video_url: c.video_url ?? "",
-                        slogan: c.slogan ?? "",
-                        vision: c.vision,
-                        mission: c.mission,
-                        is_active: c.is_active,
-                      });
-                    }}
-                    className="rounded-lg px-3 py-1.5 text-sm font-bold text-brand-deep hover:bg-brand-wash"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => del(c)}
-                    className="rounded-lg px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50"
-                  >
-                    Hapus
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {list.length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-10 text-center text-neutral-500"
+      <div className="surface mt-4 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full table-fixed text-sm">
+            <thead>
+              <tr className="border-b border-neutral-100 text-left text-[11px] font-semibold tracking-normal text-neutral-500 sm:text-xs">
+                <th scope="col" className="w-[52px] px-3 py-3 sm:px-4">
+                  No.
+                </th>
+                <th scope="col" className="px-2 py-3 sm:px-4">
+                  Nama
+                </th>
+                <th scope="col" className="hidden px-4 py-3 sm:table-cell">
+                  Kelas
+                </th>
+                <th scope="col" className="w-[92px] px-2 py-3 sm:px-4">
+                  Status
+                </th>
+                <th
+                  scope="col"
+                  className="w-[84px] px-2 py-3 text-right sm:w-[124px] sm:px-4"
                 >
-                  Belum ada kandidat.
-                </td>
+                  Aksi
+                </th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {list.map((c) => (
+                <tr key={c.id} className="border-b border-neutral-50 last:border-0">
+                  <td className="px-3 py-3 font-bold text-brand-deep sm:px-4">
+                    {c.number}
+                  </td>
+                  <td className="px-2 py-3 sm:px-4">
+                    <div
+                      className="truncate font-semibold text-neutral-800"
+                      title={c.name}
+                    >
+                      {c.name}
+                    </div>
+                    {c.slogan && (
+                      <div className="truncate text-[11px] italic text-neutral-500 sm:text-xs">
+                        &ldquo;{c.slogan}&rdquo;
+                      </div>
+                    )}
+                    <div className="truncate text-[11px] text-neutral-500 sm:hidden">
+                      {c.class_name}
+                    </div>
+                  </td>
+                  <td className="hidden truncate px-4 py-3 text-neutral-500 sm:table-cell">
+                    {c.class_name}
+                  </td>
+                  <td className="px-2 py-3 sm:px-4">
+                    <span
+                      className={`inline-block whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-bold sm:px-2.5 sm:text-xs ${
+                        c.is_active
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-neutral-100 text-neutral-500"
+                      }`}
+                    >
+                      {c.is_active ? "Aktif" : "Nonaktif"}
+                    </span>
+                  </td>
+                  <td className="px-2 py-3 text-right sm:px-4">
+                    <span className="flex flex-col items-end gap-0.5 sm:flex-row sm:justify-end sm:gap-1">
+                      <button
+                        onClick={() => {
+                          setFormError("");
+                          setEditing({
+                            id: c.id,
+                            number: c.number,
+                            name: c.name,
+                            class_name: c.class_name,
+                            wakil_name: c.wakil_name ?? "",
+                            wakil_class_name: c.wakil_class_name ?? "",
+                            photo_url: c.photo_url ?? "",
+                            vote_photo_url: c.vote_photo_url ?? "",
+                            video_url: c.video_url ?? "",
+                            slogan: c.slogan ?? "",
+                            vision: c.vision,
+                            mission: c.mission,
+                            is_active: c.is_active,
+                          });
+                        }}
+                        className="rounded-lg px-1.5 py-1 text-[11px] font-bold text-brand-deep hover:bg-brand-wash sm:px-3 sm:text-sm"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => del(c)}
+                        aria-label={`Hapus kandidat ${c.name}`}
+                        className="rounded-lg px-1.5 py-1 text-[11px] font-bold text-rose-600 hover:bg-rose-50 sm:px-3 sm:text-xs"
+                      >
+                        Hapus
+                      </button>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {list.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-10 text-center text-neutral-500"
+                  >
+                    Belum ada kandidat.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {editing && (
@@ -1196,72 +1230,110 @@ function VotersTab({
             />
           </div>
         </div>
-        <div className="surface mt-3">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead className="sticky top-0 bg-neutral-50">
-              <tr className="text-left text-xs font-semibold tracking-normal text-neutral-500">
-                <th className="px-4 py-3">NIS</th>
-                <th className="px-4 py-3">Nama</th>
-                <th className="px-4 py-3">Kelas</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Role</th>
-                <th className="px-4 py-3 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.map((v) => (
-                <tr key={v.NISN} className="border-t border-neutral-50">
-                  <td className="px-4 py-2.5 font-mono text-xs font-semibold text-neutral-700">
-                    {v.NISN}
-                  </td>
-                  <td className="px-4 py-2.5 font-medium text-neutral-800">
-                    {v.name}
-                  </td>
-                  <td className="px-4 py-2.5 text-neutral-500">{v.class_name}</td>
-                  <td className="px-4 py-2.5">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                        v.has_voted
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-neutral-100 text-neutral-500"
-                      }`}
-                    >
-                      {v.has_voted ? "Sudah vote" : "Belum vote"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-xs text-neutral-600">
-                    {v.role === "guru" ? "Guru" : "Siswa"}
-                  </td>
-                  <td className="px-4 py-2.5 text-right">
-                    {v.has_voted && (
-                      <button
-                        onClick={() => resetVote(v)}
-                        className="rounded-lg px-2.5 py-1 text-sm font-bold text-brand-deep hover:bg-brand-wash"
-                      >
-                        Reset
-                      </button>
-                    )}
-                    <button
-                      onClick={() => remove(v)}
-                      className="rounded-lg px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50"
-                    >
-                      Hapus
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {paginated.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-10 text-center text-neutral-500"
+        <div className="surface mt-3 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full table-fixed text-sm">
+              <thead className="sticky top-0 z-10 bg-neutral-50">
+                <tr className="text-left text-[11px] font-semibold tracking-normal text-neutral-500 sm:text-xs">
+                  <th scope="col" className="w-[30%] px-3 py-3 sm:w-[16%] sm:px-4">
+                    NIS / NIP
+                  </th>
+                  <th scope="col" className="px-2 py-3 sm:px-4">
+                    Nama
+                  </th>
+                  <th scope="col" className="hidden px-4 py-3 sm:table-cell">
+                    Kelas
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[84px] px-2 py-3 sm:w-[104px] sm:px-4"
                   >
-                    Tidak ada pemilih{q ? " yang cocok" : ""}.
-                  </td>
+                    Status
+                  </th>
+                  <th scope="col" className="hidden px-4 py-3 sm:table-cell">
+                    Role
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[76px] px-2 py-3 text-right sm:w-[112px] sm:px-4"
+                  >
+                    Aksi
+                  </th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginated.map((v) => (
+                  <tr key={v.NISN} className="border-t border-neutral-50">
+                    <td
+                      className="break-all px-3 py-2.5 font-mono text-[11px] font-semibold leading-tight text-neutral-700 sm:text-xs sm:px-4"
+                      title={v.NISN}
+                    >
+                      {v.NISN}
+                    </td>
+                    <td className="px-2 py-2.5 sm:px-4">
+                      <div
+                        className="truncate font-medium text-neutral-800"
+                        title={v.name}
+                      >
+                        {v.name}
+                      </div>
+                      <div className="truncate text-[11px] text-neutral-500 sm:hidden">
+                        {v.class_name} &middot;{" "}
+                        {v.role === "guru" ? "Guru" : "Siswa"}
+                      </div>
+                    </td>
+                    <td className="hidden truncate px-4 py-2.5 text-neutral-500 sm:table-cell">
+                      {v.class_name}
+                    </td>
+                    <td className="px-2 py-2.5 sm:px-4">
+                      <span
+                        className={`inline-block whitespace-nowrap rounded-full px-1.5 py-1 text-[10px] font-bold sm:px-2.5 sm:text-xs ${
+                          v.has_voted
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-neutral-100 text-neutral-500"
+                        }`}
+                      >
+                        {v.has_voted ? "Sudah vote" : "Belum vote"}
+                      </span>
+                    </td>
+                    <td className="hidden px-4 py-2.5 text-xs text-neutral-600 sm:table-cell">
+                      {v.role === "guru" ? "Guru" : "Siswa"}
+                    </td>
+                    <td className="px-2 py-2.5 text-right sm:px-4">
+                      <span className="flex flex-col items-end gap-0.5 sm:flex-row sm:justify-end sm:gap-1">
+                        {v.has_voted && (
+                          <button
+                            onClick={() => resetVote(v)}
+                            aria-label={`Reset status vote ${v.name}`}
+                            className="rounded-lg px-1.5 py-1 text-[11px] font-bold text-brand-deep hover:bg-brand-wash sm:px-2.5 sm:text-sm"
+                          >
+                            Reset
+                          </button>
+                        )}
+                        <button
+                          onClick={() => remove(v)}
+                          aria-label={`Hapus pemilih ${v.name}`}
+                          className="rounded-lg px-1.5 py-1 text-[11px] font-bold text-rose-600 hover:bg-rose-50 sm:px-2.5 sm:text-xs"
+                        >
+                          Hapus
+                        </button>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {paginated.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-10 text-center text-neutral-500"
+                    >
+                      Tidak ada pemilih{q ? " yang cocok" : ""}.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {totalPages > 1 && (
@@ -1590,14 +1662,37 @@ function DangerTab({
   fail: (e: unknown) => void;
 }) {
   const [confirmText, setConfirmText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(
+    null,
+  );
+  const confirmOk = confirmText.trim().toUpperCase() === "RESET";
 
   const resetAll = async () => {
+    if (busy) return;
+    setBusy(true);
+    setResult(null);
     try {
       await api.adminResetVotes(username, key_);
-      flash("Semua suara dihapus dan status pemilih direset.");
+      const stats = await api.adminStats(username, key_);
       setConfirmText("");
+      if (stats.total_votes === 0) {
+        const msg = `Berhasil: semua suara dihapus, ${stats.voted} pemilih kini belum vote.`;
+        setResult({ ok: true, msg });
+        flash(msg);
+      } else {
+        const msg = `Gagal: masih ada ${stats.total_votes} suara di database. Muat ulang halaman lalu coba lagi.`;
+        setResult({ ok: false, msg });
+        fail(new Error(msg));
+      }
     } catch (e) {
+      setResult({
+        ok: false,
+        msg: e instanceof Error ? e.message : String(e),
+      });
       fail(e);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -1619,21 +1714,44 @@ function DangerTab({
           Menghapus seluruh suara yang masuk dan mengembalikan semua pemilih ke
           status <b>belum vote</b>. Tindakan ini tidak dapat dibatalkan.
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+        <form
+          className="mt-4 flex flex-wrap items-center gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (confirmOk) void resetAll();
+          }}
+        >
+          <label htmlFor="konfirmasi-reset" className="sr-only">
+            Ketik RESET untuk mengonfirmasi penghapusan semua suara
+          </label>
           <input
+            id="konfirmasi-reset"
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
             placeholder='Ketik "RESET" untuk konfirmasi'
-            className="flex-1 min-w-[220px] rounded-xl border border-rose-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-rose-500"
+            autoComplete="off"
+            className="min-w-[200px] flex-1 rounded-xl border border-rose-300 bg-white px-4 py-2.5 text-sm uppercase outline-none focus:border-rose-500"
           />
           <button
-            disabled={confirmText !== "RESET"}
-            onClick={resetAll}
-            className="rounded-xl bg-rose-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-rose-200 hover:bg-rose-700 disabled:opacity-40"
+            type="submit"
+            disabled={!confirmOk || busy}
+            className="rounded-xl bg-rose-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-rose-200 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Hapus Semua Suara
+            {busy ? "Menghapus..." : "Hapus Semua Suara"}
           </button>
-        </div>
+        </form>
+        {result && (
+          <p
+            role="status"
+            className={`mt-3 rounded-xl border px-4 py-3 text-sm font-semibold ${
+              result.ok
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-rose-300 bg-rose-100 text-rose-800"
+            }`}
+          >
+            {result.msg}
+          </p>
+        )}
       </div>
 
       {isDemoMode && (
