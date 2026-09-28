@@ -10,6 +10,21 @@ export { formatInline };
 /** Satu URL media beserta jenisnya, supaya jenis tidak hilang saat pindah. */
 type Sumber = { url: string; jenis: "iframe" | "video" | "foto" };
 
+/**
+ * Rasio kotak untuk video, ikut orientasi berkasnya.
+ *
+ * Hook terpisah supaya pemanggilan hook tidak pernah bergantung pada kondisi
+ * render: video yang baru berganti mulai lagi dari rasio landscape sampai
+ * metadata-nya masuk.
+ */
+function usePotret(_url?: string) {
+  const [potret, setPotret] = useState(false);
+  useEffect(() => {
+    setPotret(false);
+  }, [_url]);
+  return [potret, setPotret] as const;
+}
+
 export function isDirectMedia(url: string) {
   return /\.(mp4|webm|ogg|mov|gif)$/i.test(url);
 }
@@ -27,12 +42,14 @@ export function isVimeo(url: string) {
  *
  * YouTube dan Vimeo diputar lewat iframe. Tautan berbagi Google Drive tidak
  * bisa diputar langsung, jadi diteruskan ke proxy server yang mengambil
- * token unduh dari Drive. Berkas video biasa (mp4, webm) dipakai apa adanya.
+ * token unduh dari Drive. Jalur relatif (misalnya berkas di /media) dan
+ * berkas video biasa dipakai apa adanya.
  */
 export function videoCandidates(raw: string | null | undefined): string[] {
   const url = (raw ?? "").trim();
   if (!url) return [];
   if (isYouTube(url) || isVimeo(url)) return [url];
+  if (url.startsWith("/")) return [url];
   if (/^https?:\/\//i.test(url)) {
     const id = driveFileId(url);
     if (id && /drive\.google\.com/.test(url)) return [driveVideoProxyUrl(id)];
@@ -149,9 +166,9 @@ export function CandidateMedia({
     sumber.push({ url: u, jenis: "foto" });
   }
 
-  const [index, setIndex] = useState(0);
   const urlMedia = candidate.video_url || sumberFoto || "";
-
+  const [index, setIndex] = useState(0);
+  const [potret, setPotret] = usePotret(urlMedia);
   // Kandidat bisa berganti lewat tab, jadi urutan dicoba dimulai ulang.
   useEffect(() => {
     setIndex(0);
@@ -195,23 +212,27 @@ export function CandidateMedia({
   }
 
   if (aktif?.jenis === "video") {
+    // Video rekaman HP sering tegak (potret) sementara kotaknya landscape.
+    // Rasio kotaknya ikut video supaya tidak ada pita hitam besar di samping.
     return (
-      <div
-        className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950"
-        style={{ aspectRatio: "16/9" }}
-      >
-        <video
-          src={url}
-          className="h-full w-full object-contain"
-          controls
-          muted
-          loop
-          playsInline
-          // Berkas video asli bisa berukuran ratusan megabyte, jadi peramban
-          // hanya mengambil metadata sampai pengunjung benar-benar memutar.
-          preload="metadata"
-          onError={berikut}
-        />
+      <div className="mx-auto w-full max-w-md">
+        <div
+          className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950"
+          style={{ aspectRatio: potret ? "9 / 16" : "16 / 9" }}
+        >
+          <video
+            src={url}
+            className="h-full w-full object-contain"
+            controls
+            playsInline
+            preload="metadata"
+            onLoadedMetadata={(e) => {
+              const el = e.currentTarget;
+              if (el.videoHeight > el.videoWidth) setPotret(true);
+            }}
+            onError={berikut}
+          />
+        </div>
       </div>
     );
   }

@@ -65,18 +65,31 @@ for (let i = 0; i < jumlahTab; i++) {
       placeholder: section?.textContent?.includes("Video belum diunggah") ?? false,
     };
   });
-  // Buktikan benar-benar diputar: tekan play lalu lihat currentTime bergerak.
+  // Buktikan benar-benar diputar dengan suara: tekan play, lalu lihat
+  // currentTime bergerak dan byte audio ikut ter-decode.
   const main = await page.evaluate(async () => {
     const v = document.querySelector('section[aria-labelledby="video-paslon"] video');
     if (!v) return { bisaMain: false };
     const awal = v.currentTime;
+    const bisuAwal = v.muted;
     try {
       await v.play();
     } catch (e) {
       return { bisaMain: false, alasan: String(e).slice(0, 80) };
     }
     await new Promise((r) => setTimeout(r, 3000));
-    return { bisaMain: true, awal, akhir: v.currentTime };
+    return {
+      bisaMain: true,
+      awal,
+      akhir: v.currentTime,
+      bisu: bisuAwal || v.muted,
+      volume: v.volume,
+      byteAudio: v.webkitAudioDecodedByteCount ?? -1,
+      kotak: (() => {
+        const r2 = v.getBoundingClientRect();
+        return `${Math.round(r2.width)}x${Math.round(r2.height)}`;
+      })(),
+    };
   });
 
   console.log(`#${i + 1}`, JSON.stringify({ ...hasil, main }));
