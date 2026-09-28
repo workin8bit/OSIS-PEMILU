@@ -11,6 +11,18 @@ const nextConfig: NextConfig = {
   // lets a local verification build use a separate directory; production
   // builds on Vercel leave it unset and keep the default `.next`.
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  // Video kampanye berukuran puluhan megabyte. Tanpa cache header yang
+  // panjang, peramban dan CDN memeriksa ulang ke server setiap kali video
+  // diputar sehingga playback tersendat. Berkas di /media/ bersifat final,
+  // jadi mengganti berkas berarti memakai nama baru.
+  async headers() {
+    return [
+      {
+        source: "/media/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
