@@ -11,6 +11,7 @@ next-env.d.ts
 # Tooling agent lokal (bukan bagian dari aplikasi)
 .agents/
 .claude/
+.kilo/
 skills-lock.json
 
 # Versi lama aplikasi dipindah keluar agar tidak ikut ter-deploy

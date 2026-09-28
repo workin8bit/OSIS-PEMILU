@@ -12,6 +12,7 @@
 import puppeteer from "puppeteer-core";
 
 const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+const ASAL = (process.env.BASE_URL || "http://localhost:3000").replace(/\/$/, "");
 const NIS = process.argv[2] || process.env.NIS_PILKETOS || "";
 if (!NIS) {
   console.error("Butuh NISN uji: setel NIS_PILKETOS=<nisn> atau jalankan node check-foto-drive.mjs <nisn>.");
@@ -60,14 +61,14 @@ const browser = await puppeteer.launch({
 // 1. Beranda: kartu ringkas memakai foto compact.
 let page = await browser.newPage();
 await page.setViewport({ width: 1280, height: 950 });
-await page.goto("http://localhost:3000/", { waitUntil: "networkidle2", timeout: 120000 });
+await page.goto(ASAL + "/", { waitUntil: "networkidle2", timeout: 120000 });
 console.log("Beranda   :", JSON.stringify(await page.evaluate(bacaGambar)));
 await page.close();
 
 // 2. Halaman paslon: kartu identitas memuat foto.
 page = await browser.newPage();
 await page.setViewport({ width: 1280, height: 950 });
-await page.goto("http://localhost:3000/candidates", { waitUntil: "networkidle2", timeout: 120000 });
+await page.goto(ASAL + "/candidates", { waitUntil: "networkidle2", timeout: 120000 });
 await new Promise((r) => setTimeout(r, 2500));
 console.log("Paslon    :", JSON.stringify(await page.evaluate(bacaGambar)));
 await page.close();
@@ -90,7 +91,7 @@ page.on("request", (req) => {
 });
 let masuk = false;
 for (let a = 0; a < 3 && !masuk; a++) {
-  await page.goto("http://localhost:3000/login", { waitUntil: "networkidle2", timeout: 120000 });
+  await page.goto(ASAL + "/login", { waitUntil: "networkidle2", timeout: 120000 });
   await page.type("#nisn", NIS);
   await page.type("#password", NIS);
   await page.click('button[type="submit"]');
