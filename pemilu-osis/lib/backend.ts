@@ -261,7 +261,15 @@ export const api = {
     if (error) throw friendly(error);
   },
 
-  async adminResetVotes(username: string, key: string): Promise<void> {
+  /**
+   * Hapus semua suara. Jalur utama lewat route server (service role).
+   * Kalau environment server belum punya service-role key, route menjawab 500
+   * dan kita jatuh ke RPC `admin_reset_votes` supaya tombol tetap berfungsi.
+   */
+  async adminResetVotes(
+    username: string,
+    key: string,
+  ): Promise<{ jalur: "route" | "rpc" }> {
     const res = await fetch("/api/admin/reset-votes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -270,7 +278,17 @@ export const api = {
     const body = (await res.json().catch(() => ({}))) as {
       error?: string;
     };
-    if (!res.ok) throw new Error(body.error ?? "Gagal menghapus suara.");
+    if (res.ok) return { jalur: "route" };
+    const pesan = body.error ?? "Gagal menghapus suara.";
+    if (res.status === 500 && /belum dikonfigurasi/i.test(pesan)) {
+      const { error } = await sb().rpc("admin_reset_votes", {
+        p_username: username,
+        p_key: key,
+      });
+      if (!error) return { jalur: "rpc" };
+      throw friendly(error);
+    }
+    throw new Error(pesan);
   },
 
   async adminSetAdminPassword(

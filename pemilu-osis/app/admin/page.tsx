@@ -1673,11 +1673,15 @@ function DangerTab({
     setBusy(true);
     setResult(null);
     try {
-      await api.adminResetVotes(username, key_);
+      const { jalur } = await api.adminResetVotes(username, key_);
       const stats = await api.adminStats(username, key_);
       setConfirmText("");
       if (stats.total_votes === 0) {
-        const msg = `Berhasil: semua suara dihapus, ${stats.voted} pemilih kini belum vote.`;
+        const catatan =
+          jalur === "rpc"
+            ? " (jalur cadangan: service-role key belum ada di server Vercel)"
+            : "";
+        const msg = `Berhasil: semua suara dihapus, ${stats.voted} pemilih kini belum vote${catatan}.`;
         setResult({ ok: true, msg });
         flash(msg);
       } else {
