@@ -160,8 +160,6 @@ if (masuk) {
     };
   });
   const fotoKartu = foto.dalamKartu.length ? foto.dalamKartu : foto.semuaGambar;
-  const khusus = fotoKartu.filter((u) => u.includes("foto-bilik-suara")).length;
-  const profil = fotoKartu.filter((u) => u.includes("foto-profil-paslon")).length;
   console.log("BILIK SUARA        :", JSON.stringify({ radio: foto.radio, jumlahKartu: fotoKartu.length, adaMain: foto.adaMain }));
   console.log("FOTO BILIK SUARA  :", JSON.stringify(diminta));
   console.log("  foto khusus:", diminta.filter((u) => u.includes("foto-bilik-suara")).length, "| foto profil:", diminta.filter((u) => u.includes("foto-profil-paslon")).length, "(harus 1 dan 1)");

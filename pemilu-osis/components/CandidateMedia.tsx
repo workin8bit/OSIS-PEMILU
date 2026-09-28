@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import type { Candidate } from "@/lib/types";
 import { formatInline } from "@/lib/richText";
-import { mediaUrlCandidates } from "@/lib/mediaUrl";
+import { driveFileId, driveVideoProxyUrl, mediaUrlCandidates } from "@/lib/mediaUrl";
 
 export { formatInline };
+
+/** Satu URL media beserta jenisnya, supaya jenis tidak hilang saat pindah. */
+type Sumber = { url: string; jenis: "iframe" | "video" | "foto" };
 
 export function isDirectMedia(url: string) {
   return /\.(mp4|webm|ogg|mov|gif)$/i.test(url);
@@ -17,6 +20,24 @@ export function isYouTube(url: string) {
 
 export function isVimeo(url: string) {
   return /vimeo\.com/i.test(url);
+}
+
+/**
+ * URL yang dicoba untuk video, berurutan.
+ *
+ * YouTube dan Vimeo diputar lewat iframe. Tautan berbagi Google Drive tidak
+ * bisa diputar langsung, jadi diteruskan ke proxy server yang mengambil
+ * token unduh dari Drive. Berkas video biasa (mp4, webm) dipakai apa adanya.
+ */
+export function videoCandidates(raw: string | null | undefined): string[] {
+  const url = (raw ?? "").trim();
+  if (!url) return [];
+  if (isYouTube(url) || isVimeo(url)) return [url];
+  if (/^https?:\/\//i.test(url)) {
+    const id = driveFileId(url);
+    if (id && /drive\.google\.com/.test(url)) return [driveVideoProxyUrl(id)];
+  }
+  return [url];
 }
 
 /**
@@ -111,14 +132,22 @@ export function CandidateMedia({
    */
   photoOnly?: boolean;
 }) {
-  // Tautan Google Drive tidak bisa dipakai apa adanya, jadi foto diubah
-  // menjadi beberapa URL yang dicoba berurutan. Video memakai URL aslinya,
-  // lalu foto menjadi cadangan terakhir kalau video gagal dimuat.
+  // Tautan Google Drive tidak bisa dipakai apa adanya. Foto diubah jadi
+  // beberapa URL thumbnail, sedangkan video Drive harus lewat proxy server
+  // karena Drive hanya memberi berkas lewat token unduh di halaman peringatan.
+  //
+  // Setiap kandidat membawa jenisnya sendiri supaya URL video tidak pernah
+  // jatuh ke elemen <img> (dan sebaliknya) saat mencoba kandidat berikutnya.
   const sumberFoto = photoUrl !== undefined ? photoUrl : candidate.photo_url;
-  const foto = mediaUrlCandidates(sumberFoto);
-  const video =
-    !photoOnly && candidate.video_url ? [candidate.video_url.trim()] : [];
-  const sumber = [...video, ...foto];
+  const sumber: Sumber[] = [];
+  if (!photoOnly) {
+    for (const u of videoCandidates(candidate.video_url)) {
+      sumber.push({ url: u, jenis: isYouTube(u) || isVimeo(u) ? "iframe" : "video" });
+    }
+  }
+  for (const u of mediaUrlCandidates(sumberFoto)) {
+    sumber.push({ url: u, jenis: "foto" });
+  }
 
   const [index, setIndex] = useState(0);
   const urlMedia = candidate.video_url || sumberFoto || "";
@@ -129,9 +158,11 @@ export function CandidateMedia({
   }, [urlMedia]);
 
   const gagal = index >= sumber.length;
-  const url = gagal ? "" : sumber[index];
+  const aktif = gagal ? null : sumber[index];
+  const url = aktif?.url ?? "";
+  const berikut = () => setIndex((i) => i + 1);
 
-  if (!gagal && !photoOnly && isYouTube(url) ) {
+  if (aktif?.jenis === "iframe" && isYouTube(url)) {
     return (
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950">
         <div className="relative aspect-video">
@@ -147,7 +178,7 @@ export function CandidateMedia({
     );
   }
 
-  if (!gagal && !photoOnly && isVimeo(url)) {
+  if (aktif?.jenis === "iframe") {
     return (
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950">
         <div className="relative aspect-video">
@@ -163,7 +194,7 @@ export function CandidateMedia({
     );
   }
 
-  if (!gagal && !photoOnly && video.length > 0 && url === video[0] && isDirectMedia(url)) {
+  if (aktif?.jenis === "video") {
     return (
       <div
         className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950"
@@ -171,19 +202,21 @@ export function CandidateMedia({
       >
         <video
           src={url}
-          className="h-full w-full object-cover"
-          autoPlay
+          className="h-full w-full object-contain"
+          controls
           muted
           loop
           playsInline
+          // Berkas video asli bisa berukuran ratusan megabyte, jadi peramban
+          // hanya mengambil metadata sampai pengunjung benar-benar memutar.
           preload="metadata"
-          onError={() => setIndex((i) => i + 1)}
+          onError={berikut}
         />
       </div>
     );
   }
 
-  if (!url) {
+  if (!aktif) {
     // Pada mode compact media jadi thumbnail di samping teks, jadi
     // placeholder harus berukuran sama - bukan blok aspect-video.
     if (compact) {
@@ -261,6 +294,8 @@ export function CandidateMedia({
     );
   }
 
+  // Sampai sini kandidat yang tersisa pasti foto: video dan iframe sudah
+  // ditangani di atas berdasarkan jenisnya masing-masing.
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200">
       {/* onError dipakai untuk mencoba URL berikutnya, bukan untuk
@@ -272,7 +307,7 @@ export function CandidateMedia({
         alt={candidate.name}
         loading="lazy"
         decoding="async"
-        onError={() => setIndex((i) => i + 1)}
+        onError={berikut}
         className={`w-full object-cover ${compact ? "aspect-[3/4]" : "h-64 sm:h-80"}`}
       />
     </div>

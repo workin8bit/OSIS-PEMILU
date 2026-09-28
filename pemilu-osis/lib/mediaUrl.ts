@@ -27,6 +27,19 @@ export function driveFileId(url: string): string | null {
   return paksa ? paksa[1] : null;
 }
 
+/**
+ * URL proxy untuk video Drive.
+ *
+ * Berbeda dengan foto, tautan berbagi Drive tidak punya versi "langsung" yang
+ * bisa diputar: Drive membalas halaman peringatan virus scan dan berkas hanya
+ * bisa diunduh lewat `drive.usercontent.google.com` dengan token `uuid` yang
+ * hanya ada di halaman itu. Karena itu video lewat proxy server yang
+ * mengambil tokennya, lalu meneruskan byte-nya ke elemen <video>.
+ */
+export function driveVideoProxyUrl(fileId: string) {
+  return `/api/media/drive?id=${encodeURIComponent(fileId)}`;
+}
+
 /** True bila tautan Drive bisa diubah menjadi URL gambar langsung. */
 export function isGoogleDrive(url: string) {
   return /drive\.google\.com/.test(url) || /googleusercontent\.com/.test(url);
