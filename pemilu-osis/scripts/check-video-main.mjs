@@ -77,7 +77,8 @@ for (let i = 0; i < jumlahTab; i++) {
     } catch (e) {
       return { bisaMain: false, alasan: String(e).slice(0, 80) };
     }
-    await new Promise((r) => setTimeout(r, 3000));
+    await new Promise((r) => setTimeout(r, 6000));
+    const q = v.getVideoPlaybackQuality?.() ?? {};
     return {
       bisaMain: true,
       awal,
@@ -85,6 +86,8 @@ for (let i = 0; i < jumlahTab; i++) {
       bisu: bisuAwal || v.muted,
       volume: v.volume,
       byteAudio: v.webkitAudioDecodedByteCount ?? -1,
+      buffering: v.buffered.length ? `${v.buffered.start(0).toFixed(1)}-${v.buffered.end(0).toFixed(1)}` : "-",
+      quai: `${q.totalVideoFrames ?? 0} frame,_dropped_ ${q.droppedVideoFrames ?? 0}`,
       kotak: (() => {
         const r2 = v.getBoundingClientRect();
         return `${Math.round(r2.width)}x${Math.round(r2.height)}`;
