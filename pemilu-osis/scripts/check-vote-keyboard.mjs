@@ -1,7 +1,11 @@
 import puppeteer from "puppeteer-core";
 
 const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-const NIS = process.argv[2] || "197007191993011002";
+const NIS = process.argv[2] || process.env.NIS_PILKETOS || "";
+if (!NIS) {
+  console.error("Butuh NISN uji: setel NIS_PILKETOS=<nisn> atau jalankan node check-vote-keyboard.mjs <nisn>.");
+  process.exit(1);
+}
 
 const browser = await puppeteer.launch({
   executablePath: CHROME,

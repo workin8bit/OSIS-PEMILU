@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { type FC, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { api, isDemoMode } from "@/lib/backend";
@@ -453,6 +453,7 @@ const EMPTY_CAND: CandidateInput = {
   wakil_name: "",
   wakil_class_name: "",
   photo_url: "",
+  vote_photo_url: "",
   video_url: "",
   slogan: "",
   vision: "",
@@ -597,6 +598,7 @@ function CandidatesTab({
                         wakil_name: c.wakil_name ?? "",
                         wakil_class_name: c.wakil_class_name ?? "",
                         photo_url: c.photo_url ?? "",
+                        vote_photo_url: c.vote_photo_url ?? "",
                         video_url: c.video_url ?? "",
                         slogan: c.slogan ?? "",
                         vision: c.vision,
@@ -678,7 +680,7 @@ function CandidatesTab({
               className="input"
             />
           </Field>
-          <Field label="URL Foto (opsional)" className="mt-4">
+          <Field label="URL Foto Profil (opsional)" className="mt-4">
             <input
               value={editing.photo_url}
               onChange={(e) =>
@@ -687,6 +689,38 @@ function CandidatesTab({
               placeholder="https://..."
               className="input"
             />
+            <p className="mt-1.5 text-xs text-neutral-500">
+              Dipakai di beranda dan halaman profil paslon. Tautan Google Drive
+              sharing otomatis diubah ke bentuk thumbnail.
+            </p>
+          </Field>
+          <Field label="URL Foto Bilik Suara (opsional)" className="mt-4">
+            <input
+              value={editing.vote_photo_url}
+              onChange={(e) =>
+                setEditing({ ...editing, vote_photo_url: e.target.value })
+              }
+              placeholder="https://... (kosongkan untuk memakai foto profil)"
+              className="input"
+            />
+            <p className="mt-1.5 text-xs text-neutral-500">
+              Foto khusus kartu di bilik suara. Kalau dikosongkan, kartu memakai
+              foto profil; mengosongkan kolom ini menghapus foto khusus.
+            </p>
+          </Field>
+          <Field label="URL Video Kampanye (opsional)" className="mt-4">
+            <input
+              value={editing.video_url}
+              onChange={(e) =>
+                setEditing({ ...editing, video_url: e.target.value })
+              }
+              placeholder="https://youtube.com/watch?v=... atau https://.../video.mp4"
+              className="input"
+            />
+            <p className="mt-1.5 text-xs text-neutral-500">
+              Tampil di bagian Video Kampanye pada halaman profil paslon, di
+              atas visi. Kosongkan kalau paslon belum punya video.
+            </p>
           </Field>
           <Field label="Visi" className="mt-4">
             <textarea

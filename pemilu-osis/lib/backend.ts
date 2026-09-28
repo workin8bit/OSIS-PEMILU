@@ -189,6 +189,8 @@ export const api = {
       p_wakil_name: data.wakil_name || null,
       p_wakil_class_name: data.wakil_class_name || null,
       p_photo_url: data.photo_url || null,
+      // "CLEAR" berarti panitia sengaja mengosongkan foto khusus bilik suara.
+      p_vote_photo_url: data.vote_photo_url === "" ? "CLEAR" : data.vote_photo_url || null,
       p_video_url: data.video_url || null,
       p_slogan: data.slogan || null,
       p_vision: data.vision,

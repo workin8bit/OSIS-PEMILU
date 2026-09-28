@@ -1,5 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { Candidate } from "@/lib/types";
 import { formatInline } from "@/lib/richText";
+import { mediaUrlCandidates } from "@/lib/mediaUrl";
 
 export { formatInline };
 
@@ -91,9 +95,15 @@ export function CandidateMedia({
   candidate,
   compact = false,
   photoOnly = false,
+  photoUrl,
 }: {
   candidate: Candidate;
   compact?: boolean;
+  /**
+   * Ganti sumber foto tanpa mengubah data kandidat. Dipakai bilik suara
+   * yang boleh memakai foto khusus (vote_photo_url).
+   */
+  photoUrl?: string | null;
   /**
    * Abaikan video dan pakai foto saja. Dipakai di beranda supaya kartu
    * ringkas tidak memuat iframe; video tetap bisa dilihat di halaman
@@ -101,9 +111,77 @@ export function CandidateMedia({
    */
   photoOnly?: boolean;
 }) {
-  const url = photoOnly
-    ? candidate.photo_url || ""
-    : candidate.video_url || candidate.photo_url || "";
+  // Tautan Google Drive tidak bisa dipakai apa adanya, jadi foto diubah
+  // menjadi beberapa URL yang dicoba berurutan. Video memakai URL aslinya,
+  // lalu foto menjadi cadangan terakhir kalau video gagal dimuat.
+  const sumberFoto = photoUrl !== undefined ? photoUrl : candidate.photo_url;
+  const foto = mediaUrlCandidates(sumberFoto);
+  const video =
+    !photoOnly && candidate.video_url ? [candidate.video_url.trim()] : [];
+  const sumber = [...video, ...foto];
+
+  const [index, setIndex] = useState(0);
+  const urlMedia = candidate.video_url || sumberFoto || "";
+
+  // Kandidat bisa berganti lewat tab, jadi urutan dicoba dimulai ulang.
+  useEffect(() => {
+    setIndex(0);
+  }, [urlMedia]);
+
+  const gagal = index >= sumber.length;
+  const url = gagal ? "" : sumber[index];
+
+  if (!gagal && !photoOnly && isYouTube(url) ) {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950">
+        <div className="relative aspect-video">
+          <iframe
+            src={url}
+            className="h-full w-full"
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={candidate.name}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (!gagal && !photoOnly && isVimeo(url)) {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950">
+        <div className="relative aspect-video">
+          <iframe
+            src={url}
+            className="h-full w-full"
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+            title={candidate.name}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (!gagal && !photoOnly && video.length > 0 && url === video[0] && isDirectMedia(url)) {
+    return (
+      <div
+        className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950"
+        style={{ aspectRatio: "16/9" }}
+      >
+        <video
+          src={url}
+          className="h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          onError={() => setIndex((i) => i + 1)}
+        />
+      </div>
+    );
+  }
 
   if (!url) {
     // Pada mode compact media jadi thumbnail di samping teks, jadi
@@ -183,46 +261,18 @@ export function CandidateMedia({
     );
   }
 
-  if (!photoOnly && candidate.video_url && (isYouTube(url) || isVimeo(url))) {
-    return (
-      <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950">
-        <div className="relative aspect-video">
-          <iframe
-            src={url}
-            className="h-full w-full"
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title={candidate.name}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (!photoOnly && candidate.video_url && isDirectMedia(url)) {
-    return (
-      <div
-        className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950"
-        style={{ aspectRatio: "16/9" }}
-      >
-        <video
-          src={url}
-          className="h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200">
+      {/* onError dipakai untuk mencoba URL berikutnya, bukan untuk
+          interaksi pengguna, jadi aturan elemen non-interaktif tidak
+          berlaku di sini. */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <img
         src={url}
         alt={candidate.name}
+        loading="lazy"
+        decoding="async"
+        onError={() => setIndex((i) => i + 1)}
         className={`w-full object-cover ${compact ? "aspect-[3/4]" : "h-64 sm:h-80"}`}
       />
     </div>

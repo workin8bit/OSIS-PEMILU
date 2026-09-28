@@ -27,6 +27,7 @@ begin
 end;
 $$;
 
--- Verifikasi manual setelah dijalankan:
---   select * from public.check_voter('197007191993011002', '197007191993011002');
+-- Verifikasi manual setelah dijalankan (isi NIP asli guru, jangan tuliskan
+-- NIP nyata di berkas yang masuk Git):
+--   select * from public.check_voter('<NIP>', '<NIP>');
 -- harus keluar satu baris dengan role = 'guru'.

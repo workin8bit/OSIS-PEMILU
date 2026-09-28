@@ -267,9 +267,16 @@ export default function VotePage() {
             >
               {/* Foto paslon sebagai elemen visual kartu. Nomor urut tetap
                   tampil sebagai chip kecil di sudut foto supaya mudah dipindai,
-                  dan tampil lagi di kaki kartu. */}
+                  dan tampil lagi di kaki kartu. Foto khusus bilik suara
+                  dipakai kalau panitia mengisinya; kalau kosong, turun ke foto
+                  profil supaya kartu tidak pernah kosong tanpa alasan. */}
               <div className="relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50">
-                <CandidateMedia candidate={c} compact photoOnly />
+                <CandidateMedia
+                  candidate={c}
+                  compact
+                  photoOnly
+                  photoUrl={c.vote_photo_url || c.photo_url}
+                />
 
                 <span className="absolute left-2 top-2 rounded-md bg-neutral-950/85 px-2 py-0.5 font-mono text-[11px] font-black text-white">
                   {String(c.number).padStart(2, "0")}

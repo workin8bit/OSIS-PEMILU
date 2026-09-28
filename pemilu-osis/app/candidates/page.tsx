@@ -9,21 +9,34 @@ import { CandidateMedia, MissionList } from "@/components/CandidateMedia";
 export default function CandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  // Status pemuatan dipisah dari daftar kandidat supaya kegagalan jaringan
+  // tidak disamarkan sebagai "belum ada kandidat".
+  const [status, setStatus] = useState<"memuat" | "siap" | "gagal">("memuat");
+  const [percobaan, setPercobaan] = useState(0);
 
   useEffect(() => {
+    let batal = false;
+    setStatus("memuat");
     api
       .listCandidates()
       .then((cs) => {
+        if (batal) return;
         const list = cs.filter((c) => c.is_active);
         setCandidates(list);
+        setStatus("siap");
         // Deep-link dari beranda: /candidates?paslon=<id>
         const wanted = new URLSearchParams(window.location.search).get("paslon");
         const match = list.find((c) => c.id === wanted);
         if (match) setActiveTab(match.id);
         else if (list.length > 0) setActiveTab(list[0].id);
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        if (!batal) setStatus("gagal");
+      });
+    return () => {
+      batal = true;
+    };
+  }, [percobaan]);
 
   // Jaga URL tetap sinkron dengan tab aktif supaya tautan bisa dibagikan.
   const selectTab = (id: string) => {
@@ -137,15 +150,53 @@ export default function CandidatesPage() {
           </div>
 
           <div className="p-6 sm:p-8">
-            {hasVideo && <CandidateMedia candidate={active} />}
+            {/* Video kampanye berada di atas visi supaya yang pertama dibaca
+                pengunjung adalah wajah dan gaya kampanyenya. Kalau belum ada
+                video, kotak kosong tetap ditampilkan supaya panitia tahu
+                tempatnya, bukan hilangnya fitur diam-diam. */}
+            <section aria-labelledby="video-paslon" className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50/60">
+              <h3
+                id="video-paslon"
+                className="px-5 pt-5 text-[12px] font-bold tracking-[0.08em] text-neutral-900 uppercase sm:px-6 sm:pt-6"
+              >
+                Video Kampanye
+              </h3>
+              <div className="p-5 sm:p-6">
+                {hasVideo ? (
+                  // Kalau video gagal dimuat, cadangan terakhirnya foto profil
+                  // paslon - bukan foto khusus bilik suara.
+                  <CandidateMedia candidate={active} />
+                ) : (
+                  <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 bg-white text-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-7 w-7 text-neutral-400"
+                      aria-hidden="true"
+                    >
+                      <rect x="2.5" y="5.5" width="14" height="13" rx="2" />
+                      <path d="m16.5 10.5 5-3v9l-5-3z" />
+                    </svg>
+                    <p className="text-sm font-medium text-neutral-700">
+                      Video belum diunggah
+                    </p>
+                    <p className="max-w-xs text-xs leading-relaxed text-neutral-500">
+                      Tempelkan tautan YouTube, Vimeo, atau berkas video lewat
+                      panel panitia.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
 
             {/* Visi dan misi dalam satu container dengan dua baris terpisah.
                 Penomoran "01 / 02" dihapus karena tidak menambah informasi. */}
-            <div
-              className={`overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50/60 ${
-                hasVideo ? "mt-6" : ""
-              }`}
-            >
+            <div className="mt-6 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50/60">
               <div className="p-5 sm:p-6">
                 <h3 className="text-[12px] font-bold tracking-[0.08em] text-neutral-900 uppercase">
                   Visi Strategis
@@ -188,7 +239,33 @@ export default function CandidatesPage() {
         </article>
       )}
 
-      {candidates.length === 0 && (
+      {status === "memuat" && (
+        <div className="mt-8 rounded-2xl border border-neutral-200 bg-white p-12 text-center">
+          <p className="text-base font-semibold text-neutral-800">Memuat data paslon…</p>
+          <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-neutral-600">
+            Sebentar, data pasangan calon sedang diambil dari server.
+          </p>
+        </div>
+      )}
+
+      {status === "gagal" && (
+        <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-12 text-center">
+          <p className="text-base font-semibold text-red-900">Data paslon gagal dimuat</p>
+          <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-red-800">
+            Koneksi ke server terputus. Coba muat ulang data; daftar paslon tidak
+            dikosongkan karena jaringan bermasalah.
+          </p>
+          <button
+            type="button"
+            onClick={() => setPercobaan((n) => n + 1)}
+            className="mt-4 inline-flex h-10 items-center justify-center rounded-full bg-neutral-900 px-5 text-sm font-semibold text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
+          >
+            Coba lagi
+          </button>
+        </div>
+      )}
+
+      {status === "siap" && candidates.length === 0 && (
         <div className="mt-8 rounded-2xl border border-dashed border-neutral-300 bg-white p-12 text-center">
           <p className="text-base font-semibold text-neutral-800">
             Belum ada kandidat aktif

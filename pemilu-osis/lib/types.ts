@@ -16,6 +16,11 @@ export interface Candidate {
   wakil_name: string | null;
   wakil_class_name: string | null;
   photo_url: string | null;
+  /**
+   * Foto khusus untuk kartu di bilik suara. Kalau kosong, halaman /vote
+   * memakai photo_url supaya panitia tidak wajib mengunggah dua kali.
+   */
+  vote_photo_url: string | null;
   video_url: string | null;
   slogan: string | null;
   vision: string;
@@ -86,6 +91,8 @@ export interface CandidateInput {
   wakil_name: string;
   wakil_class_name: string;
   photo_url: string;
+  /** Dikosongkan berarti pakai photo_url; "CLEAR" menghapus foto khusus. */
+  vote_photo_url: string;
   video_url: string;
   slogan: string;
   vision: string;
